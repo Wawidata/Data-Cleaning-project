@@ -12,6 +12,8 @@ The project emphasizes:
 2.Safe transformation practices
 
 3.Scalable SQL techniques used in professional data teams
+## Data Source
+- **Raw Dataset:** [`layoffs.csv`](layoffs.csv)
 
 ## Core Skills Demonstrated
 
@@ -207,11 +209,8 @@ The final dataset is:
 
 This mirrors the quality expectations of analytics, BI, and data engineering teams
 
-## Repository Structure
-```
-├── Data cleaning Code.sql
 
-├── README.md
+
 
 
 

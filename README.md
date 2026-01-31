@@ -31,11 +31,11 @@ MySQL
 
 Advanced SQL
 
-  Common Table Expressions (CTEs)
-  Window functions
-  String manipulation
-  Date transformations
-  Self-joins
+  - Common Table Expressions (CTEs)
+  - Window functions
+  - String manipulation
+  - Date transformations
+  - Self-joins
   
 ## Dataset Overview
 The dataset contains company layoff information, including:
@@ -78,23 +78,26 @@ Dataset Overview
 
 A dedicated staging table was created to ensure:
 
-Raw data preservation
+- Raw data preservation
 
-Safe, auditable transformations
+- Safe, auditable transformations
 
-Reproducibility of the cleaning process
+- Reproducibility of the cleaning process
 
-  ```sql
-  CREATE TABLE layoffs_staging LIKE layoffs;
-  INSERT INTO layoffs_staging
-  SELECT *
-  FROM layoffs;
+```sql
+CREATE TABLE layoffs_staging LIKE layoffs;
+INSERT INTO layoffs_staging
+SELECT *
+FROM layoffs;
+```
 
 This mirrors best practices in production data pipelines and prevents irreversible data loss.
 
 *2. Duplicate Detection & Resolution*
 
-Duplicates were identified using a window function (ROW_NUMBER) across all relevant attributes.
+Duplicates were identified using a window function (ROW_NUMBER) across all relevant attributes
+
+```sql
 WITH duplicate_cte AS (
     SELECT *,
            ROW_NUMBER() OVER(
@@ -105,6 +108,8 @@ WITH duplicate_cte AS (
 )
 DELETE FROM duplicate_cte
 WHERE row_num > 1;
+```
+
 #### Impact:
 
 Ensured each record represents a unique business event
@@ -115,25 +120,29 @@ Prevented inflated metrics during analysis
 
 Inconsistent text values were normalized to ensure accurate grouping and aggregation.
 *Company names*
-
+```sql
 UPDATE layoffs_staging
 SET company = TRIM(company);
-
+```
 *Industry normalization*
 
+```sql
 UPDATE layoffs_staging
 SET industry = 'Crypto'
 WHERE industry LIKE 'Crypto%';
+```
 
 *Country formatting*
-
+```sql
 UPDATE layoffs_staging
 SET country = TRIM(TRAILING '.' FROM country);
+```
 
 *4. Strategic NULL Handling*
 
 Blank strings were converted to NULL, and missing values were populated using contextual inference.
 
+```sql
 UPDATE layoffs_staging
 SET industry = NULL
 WHERE industry = '';
@@ -144,6 +153,7 @@ JOIN layoffs_staging t2
 SET t1.industry = t2.industry
 WHERE t1.industry IS NULL
   AND t2.industry IS NOT NULL;
+```
 
  *Approach:*
 
@@ -155,20 +165,23 @@ Avoided assumptions that could compromise data integrity
 
 Dates were standardized into proper SQL DATE format to support time-series analysis.
 
+```sql
 UPDATE layoffs_staging
 SET date = STR_TO_DATE(date, '%m/%d/%Y');
 
 ALTER TABLE layoffs_staging
 MODIFY COLUMN date DATE;
+```
 
 *6. Removal of Non-Analytical Records*
 
 Rows lacking both layoff count and percentage were removed.
-
+```sql
 DELETE FROM layoffs_staging
 WHERE total_laid_off IS NULL
   AND percentage_laid_off IS NULL;
-  
+  ```
+
 *Rationale:*
 These records provided no analytical value and could introduce noise into reports.
 
@@ -176,24 +189,26 @@ These records provided no analytical value and could introduce noise into report
 
 Temporary helper columns were dropped to maintain a clean final dataset.
 
+```sql
 ALTER TABLE layoffs_staging
 DROP COLUMN row_num;
+```
 ## Final Deliverable
 
 The final dataset is:
 
-Fully deduplicated
+- Fully deduplicated
 
-Standardized and validated
+- Standardized and validated
 
-Free from invalid or misleading records
+- Free from invalid or misleading records
 
-Ready for EDA, dashboarding, and reporting
+- Ready for EDA, dashboarding, and reporting
 
 This mirrors the quality expectations of analytics, BI, and data engineering teams
 
 ## Repository Structure
-
+```
 ├── Data cleaning Code.sql
 
 ├── README.md
